@@ -53,6 +53,11 @@ Route::prefix('v1')->group(function () {
         Route::post('attributes/bulk-delete', [\App\Http\Controllers\Admin\AttributeController::class, 'bulkDelete']);
         Route::post('attributes/bulk-status', [\App\Http\Controllers\Admin\AttributeController::class, 'bulkStatusChange']);
         Route::apiResource('attributes', \App\Http\Controllers\Admin\AttributeController::class);
+
+        // Tags
+        Route::post('tags/bulk-delete', [\App\Http\Controllers\Admin\TagController::class, 'bulkDelete']);
+        Route::post('tags/bulk-status', [\App\Http\Controllers\Admin\TagController::class, 'bulkStatusChange']);
+        Route::apiResource('tags', \App\Http\Controllers\Admin\TagController::class);
     });
 
     Route::middleware('auth:sanctum')->group(function () {

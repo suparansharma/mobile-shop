@@ -21,6 +21,10 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\AttributeRepositoryInterface::class,
             \App\Repositories\Eloquent\AttributeRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\Contracts\TagRepositoryInterface::class,
+            \App\Repositories\Eloquent\TagRepository::class
+        );
         
         $this->app->bind(
             \App\Repositories\Contracts\CategoryRepositoryInterface::class,
