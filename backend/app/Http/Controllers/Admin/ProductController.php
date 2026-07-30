@@ -3,83 +3,67 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Http\Requests\Admin\StoreProductRequest;
+use App\Http\Requests\Admin\UpdateProductRequest;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function index()
+    protected $productService;
+
+    public function __construct(ProductService $productService)
     {
-        return response()->json(Product::with(['category', 'brand'])->get());
+        $this->productService = $productService;
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $validated = $request->validate([
-            'type' => 'required|in:new,used,accessory',
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products',
-            'short_description' => 'nullable|string',
-            'long_description' => 'nullable|string',
-            'specifications' => 'nullable|array',
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'nullable|exists:sub_categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
-            'price' => 'required|numeric',
-            'discount_price' => 'nullable|numeric',
-            'stock' => 'required|integer|min:0',
-            'status' => 'boolean',
-            'is_featured' => 'boolean',
-            'is_trending' => 'boolean',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string'
-        ]);
-
-        $validated['slug'] = Str::slug($validated['name']) . '-' . time(); // ensure uniqueness
+        $perPage = $request->input('per_page', 15);
+        $filters = $request->only(['search', 'status', 'category_id', 'brand_id', 'type']);
         
-        $product = Product::create($validated);
+        return response()->json($this->productService->getPaginatedProducts($perPage, $filters));
+    }
+
+    public function store(StoreProductRequest $request)
+    {
+        $product = $this->productService->createProduct($request->validated());
         return response()->json($product, 201);
     }
 
-    public function show(Product $product)
+    public function show($id)
     {
-        return response()->json($product->load(['category', 'brand', 'images', 'attributes', 'usedPhoneDetails']));
+        return response()->json($this->productService->getProductById($id));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, $id)
     {
-        $validated = $request->validate([
-            'type' => 'required|in:new,used,accessory',
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku,'.$product->id,
-            'short_description' => 'nullable|string',
-            'long_description' => 'nullable|string',
-            'specifications' => 'nullable|array',
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'nullable|exists:sub_categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
-            'price' => 'required|numeric',
-            'discount_price' => 'nullable|numeric',
-            'stock' => 'required|integer|min:0',
-            'status' => 'boolean',
-            'is_featured' => 'boolean',
-            'is_trending' => 'boolean',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string'
-        ]);
-
-        if ($request->name !== $product->name) {
-            $validated['slug'] = Str::slug($validated['name']) . '-' . time();
-        }
-
-        $product->update($validated);
+        $product = $this->productService->updateProduct($id, $request->validated());
         return response()->json($product);
     }
 
-    public function destroy(Product $product)
+    public function destroy($id)
     {
-        $product->delete();
+        $this->productService->deleteProduct($id);
         return response()->json(null, 204);
+    }
+
+    public function duplicate($id)
+    {
+        $product = $this->productService->duplicateProduct($id);
+        return response()->json($product, 201);
+    }
+
+    public function restore($id)
+    {
+        $this->productService->restoreProduct($id);
+        return response()->json(['message' => 'Product restored successfully']);
+    }
+
+    public function trashed(Request $request)
+    {
+        $perPage = $request->input('per_page', 15);
+        $filters = $request->only(['search', 'category_id', 'brand_id', 'type']);
+        return response()->json($this->productService->getTrashedProducts($perPage, $filters));
     }
 }

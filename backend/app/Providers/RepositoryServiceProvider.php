@@ -25,6 +25,10 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\TagRepositoryInterface::class,
             \App\Repositories\Eloquent\TagRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\Contracts\ProductRepositoryInterface::class,
+            \App\Repositories\Eloquent\ProductRepository::class
+        );
         
         $this->app->bind(
             \App\Repositories\Contracts\CategoryRepositoryInterface::class,

@@ -40,7 +40,7 @@ class PublicApiController extends Controller
 
     public function productDetails($slug)
     {
-        $product = Product::with(['category', 'brand', 'images', 'attributes', 'usedPhoneDetails'])->where('slug', $slug)->firstOrFail();
+        $product = Product::with(['category', 'brand', 'images', 'attributes', 'usedPhoneDetails', 'variants'])->where('slug', $slug)->firstOrFail();
         
         return response()->json($product);
     }

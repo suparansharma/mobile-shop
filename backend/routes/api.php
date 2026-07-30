@@ -58,6 +58,12 @@ Route::prefix('v1')->group(function () {
         Route::post('tags/bulk-delete', [\App\Http\Controllers\Admin\TagController::class, 'bulkDelete']);
         Route::post('tags/bulk-status', [\App\Http\Controllers\Admin\TagController::class, 'bulkStatusChange']);
         Route::apiResource('tags', \App\Http\Controllers\Admin\TagController::class);
+
+        // Products
+        Route::get('products/trashed', [\App\Http\Controllers\Admin\ProductController::class, 'trashed']);
+        Route::post('products/{id}/duplicate', [\App\Http\Controllers\Admin\ProductController::class, 'duplicate']);
+        Route::post('products/{id}/restore', [\App\Http\Controllers\Admin\ProductController::class, 'restore']);
+        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class);
     });
 
     Route::middleware('auth:sanctum')->group(function () {
