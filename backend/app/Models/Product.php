@@ -15,8 +15,8 @@ class Product extends Model
         'type', 'name', 'slug', 'sku', 'short_description', 'long_description', 
         'type', 'name', 'slug', 'sku', 'barcode', 'short_description', 'long_description', 
         'specifications', 'category_id', 'sub_category_id', 'brand_id', 'price', 
-        'discount_price', 'stock', 'status', 'is_featured', 'is_trending', 
-        'is_popular', 'is_best_seller', 'publish_date', 'views', 'meta_title', 'meta_description'
+        'is_popular', 'is_best_seller', 'publish_date', 'views', 'meta_title', 'meta_description',
+        'low_stock_threshold'
     ];
 
     protected $casts = [
@@ -51,11 +51,26 @@ class Product extends Model
     
     public function images()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');
     }
     
     public function attributes()
     {
         return $this->hasMany(ProductAttribute::class);
+    }
+    
+    public function usedPhoneDetails()
+    {
+        return $this->hasOne(UsedPhoneDetail::class);
+    }
+
+    public function seo()
+    {
+        return $this->hasOne(ProductSeo::class);
+    }
+
+    public function inventoryHistories()
+    {
+        return $this->hasMany(InventoryHistory::class);
     }
 }

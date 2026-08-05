@@ -31,4 +31,9 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function inventoryHistories()
+    {
+        return $this->hasMany(InventoryHistory::class);
+    }
 }

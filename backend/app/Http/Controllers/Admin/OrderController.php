@@ -3,64 +3,88 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Models\OrderStatusHistory;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'items.product'])->orderBy('created_at', 'desc');
+        $query = Order::with(['items.product'])->latest();
 
-        // Optional filtering by status
-        if ($request->filled('status')) {
+        if ($request->has('status') && $request->status !== '') {
             $query->where('order_status', $request->status);
         }
 
-        // Pagination
-        $orders = $query->paginate($request->get('per_page', 15));
+        $orders = $query->paginate(10);
 
         return response()->json($orders);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        $order = Order::with(['user', 'items.product'])->findOrFail($id);
-        
+        $order = Order::with(['items.product', 'statusHistories' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }])->findOrFail($id);
+
         return response()->json($order);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'order_status' => 'sometimes|in:pending,confirmed,processing,shipping,delivered,cancelled,returned,refund',
-            'payment_status' => 'sometimes|in:pending,paid,failed'
+            'order_status' => 'required|in:pending,confirmed,processing,shipping,delivered,cancelled,returned'
         ]);
 
         $order = Order::findOrFail($id);
+        $oldStatus = $order->order_status;
+        $newStatus = $request->order_status;
 
-        if ($request->has('order_status')) {
-            $order->order_status = $request->order_status;
+        if ($oldStatus !== $newStatus) {
+            $order->order_status = $newStatus;
+            
+            if ($newStatus === 'delivered') {
+                $order->payment_status = 'paid';
+            }
+            
+            $order->save();
+
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'status' => $newStatus,
+                'notes' => $request->notes ?? "Order status changed from $oldStatus to $newStatus"
+            ]);
         }
 
-        if ($request->has('payment_status')) {
-            $order->payment_status = $request->payment_status;
+        return response()->json(['message' => 'Order status updated successfully', 'order' => $order]);
+    }
+
+    public function cancel(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        if (in_array($order->order_status, ['delivered', 'cancelled', 'returned'])) {
+            return response()->json(['message' => 'Order cannot be cancelled at this stage.'], 400);
         }
 
+        $oldStatus = $order->order_status;
+        $order->order_status = 'cancelled';
         $order->save();
 
-        return response()->json([
-            'message' => 'Order updated successfully',
-            'order' => $order
+        OrderStatusHistory::create([
+            'order_id' => $order->id,
+            'status' => 'cancelled',
+            'notes' => $request->notes ?? "Order cancelled by admin"
         ]);
+
+        // Mock refund structure
+        if ($order->payment_status === 'paid') {
+            // Trigger refund logic here
+            $order->payment_status = 'refunded';
+            $order->save();
+        }
+
+        return response()->json(['message' => 'Order cancelled successfully', 'order' => $order]);
     }
 }

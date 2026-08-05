@@ -34,6 +34,18 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\CategoryRepositoryInterface::class,
             \App\Repositories\CategoryRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\Contracts\WishlistRepositoryInterface::class,
+            \App\Repositories\Eloquent\WishlistRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Contracts\CartRepositoryInterface::class,
+            \App\Repositories\Eloquent\CartRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Contracts\OrderRepositoryInterface::class,
+            \App\Repositories\Eloquent\OrderRepository::class
+        );
     }
 
     /**

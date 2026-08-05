@@ -52,7 +52,7 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function find($id)
     {
-        return $this->model->with(['category', 'brand', 'subCategory', 'variants'])->findOrFail($id);
+        return $this->model->with(['category', 'brand', 'subCategory', 'variants', 'images', 'usedPhoneDetails', 'seo'])->findOrFail($id);
     }
 
     public function create(array $data)
@@ -61,6 +61,15 @@ class ProductRepository implements ProductRepositoryInterface
         if (isset($data['product_variants']) && is_array($data['product_variants'])) {
             $product->variants()->createMany($data['product_variants']);
         }
+        
+        if (isset($data['type']) && $data['type'] === 'used' && isset($data['used_phone_details'])) {
+            $product->usedPhoneDetails()->create($data['used_phone_details']);
+        }
+
+        if (isset($data['seo']) && is_array($data['seo'])) {
+            $product->seo()->create($data['seo']);
+        }
+        
         return $product;
     }
 
@@ -72,6 +81,29 @@ class ProductRepository implements ProductRepositoryInterface
         if (isset($data['product_variants']) && is_array($data['product_variants'])) {
             $product->variants()->delete();
             $product->variants()->createMany($data['product_variants']);
+        }
+        
+        if (isset($data['type']) && $data['type'] === 'used') {
+            if (isset($data['used_phone_details'])) {
+                if ($product->usedPhoneDetails) {
+                    $product->usedPhoneDetails()->update($data['used_phone_details']);
+                } else {
+                    $product->usedPhoneDetails()->create($data['used_phone_details']);
+                }
+            }
+        } else {
+            // If type is no longer used, remove details
+            if ($product->usedPhoneDetails) {
+                $product->usedPhoneDetails()->delete();
+            }
+        }
+
+        if (isset($data['seo']) && is_array($data['seo'])) {
+            if ($product->seo) {
+                $product->seo()->update($data['seo']);
+            } else {
+                $product->seo()->create($data['seo']);
+            }
         }
         
         return $product;

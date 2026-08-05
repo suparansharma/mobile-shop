@@ -66,4 +66,37 @@ class ProductController extends Controller
         $filters = $request->only(['search', 'category_id', 'brand_id', 'type']);
         return response()->json($this->productService->getTrashedProducts($perPage, $filters));
     }
+
+    public function export(Request $request)
+    {
+        $format = $request->input('format', 'xlsx');
+        $fileName = 'products_export_' . now()->format('Y_m_d_His');
+        
+        if ($format === 'csv') {
+            return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductsExport, $fileName . '.csv', \Maatwebsite\Excel\Excel::CSV);
+        }
+        
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductsExport, $fileName . '.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,txt'
+        ]);
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\ProductsImport, $request->file('file'));
+            return response()->json(['message' => 'Products imported successfully.']);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errors = [];
+            foreach ($failures as $failure) {
+                $errors[] = "Row {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+            return response()->json(['message' => 'Validation error during import.', 'errors' => $errors], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error during import: ' . $e->getMessage()], 500);
+        }
+    }
 }
