@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Api\V1\CouponController as ApiCouponController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +50,11 @@ Route::prefix('v1')->group(function () {
         Route::post('categories/bulk-status', [CategoryController::class, 'bulkStatusChange']);
         Route::get('categories/tree', [CategoryController::class, 'tree']);
         Route::apiResource('categories', CategoryController::class);
+
+        // Coupons
+        Route::post('coupons/bulk-delete', [CouponController::class, 'bulkDelete']);
+        Route::post('coupons/bulk-status', [CouponController::class, 'bulkStatusChange']);
+        Route::apiResource('coupons', CouponController::class);
 
         // Attributes
         Route::post('attributes/bulk-delete', [\App\Http\Controllers\Admin\AttributeController::class, 'bulkDelete']);
@@ -107,6 +114,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/apply-coupon', [\App\Http\Controllers\Api\V1\CartController::class, 'applyCoupon']);
             Route::post('/sync', [\App\Http\Controllers\Api\V1\CartController::class, 'sync']);
         });
+
+        // Coupon Routes
+        Route::post('/coupons/apply', [ApiCouponController::class, 'apply']);
+        Route::post('/coupons/remove', [ApiCouponController::class, 'remove']);
 
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);

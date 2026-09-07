@@ -46,6 +46,11 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\OrderRepositoryInterface::class,
             \App\Repositories\Eloquent\OrderRepository::class
         );
+        
+        $this->app->bind(
+            \App\Repositories\Contracts\CouponRepositoryInterface::class,
+            \App\Repositories\Eloquent\CouponRepository::class
+        );
     }
 
     /**
